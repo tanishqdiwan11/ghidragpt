@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ex
+set -e
 
 GHIDRA_PATH=""
 GHIDRA_INSTALL_DIR=/ghidra
