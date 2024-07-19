@@ -121,9 +121,9 @@ public class ghidragptComponent extends ComponentProvider {
     };
 
     action.setEnabled(true);
-    action.setDescription("Generate a comprehensive report of the binary analysis");
+    action.setDescription("Generate a comprehensive report of the current function analysis");
     action.setMenuBarData(new MenuData(new String[] {
-        ToolConstants.MENU_TOOLS, FUNCTION_ID_NAME, "Generate Analysis Report"}));
+        ToolConstants.MENU_TOOLS, FUNCTION_ID_NAME, "Generate Function Analysis Report"}));
     action.setKeyBindingData(new KeyBindingData(
         KeyEvent.VK_R, InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK |
                             InputEvent.CTRL_DOWN_MASK));
