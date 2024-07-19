@@ -175,48 +175,71 @@ public class ghidragptPlugin extends ProgramPlugin {
   }
 
   public void generateReport() {
-    Program program = currentProgram;
-    if (program == null) {
-        error("No program is currently open.");
+    DecompilerResults decResult = decompileCurrentFunc();
+    if (decResult == null) {
+        error("Failed to decompile the current function.");
         return;
     }
 
+    Program program = decResult.prog;
+    Function function = decResult.func;
+    String decompiled = decResult.decompiledFunc;
+
     StringBuilder report = new StringBuilder();
-    report.append("Binary Analysis Report\n");
-    report.append("======================\n\n");
+    report.append("Function Analysis Report\n");
+    report.append("========================\n\n");
     report.append("Program: ").append(program.getName()).append("\n");
+    report.append("Function: ").append(function.getName()).append("\n");
+    report.append("Address: ").append(function.getEntryPoint()).append("\n");
     report.append("Date: ").append(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())).append("\n\n");
 
-    // Analyze all functions
-    FunctionIterator functions = program.getFunctionManager().getFunctions(true);
-    for (Function function : functions) {
-        report.append("Function: ").append(function.getName()).append("\n");
-        report.append("Address: ").append(function.getEntryPoint()).append("\n");
+    log(String.format("Generating report for function: %s", function.getName()));
 
-        // Identify function
-        String identification = askChatGPT(String.format(GCG_IDENTIFY_STRING, decompileFunction(function)));
+    // Identify function
+    log("Identifying function...");
+    String identification = askChatGPT(String.format(GCG_IDENTIFY_STRING, decompiled));
+    if (identification != null) {
         report.append("Identification:\n").append(identification).append("\n\n");
+    } else {
+        report.append("Identification: Failed to retrieve\n\n");
+    }
 
-        // Find vulnerabilities
-        String vulnerabilities = askChatGPT(String.format(GCG_VULNERABILITY_STRING, decompileFunction(function)));
+    // Find vulnerabilities
+    log("Finding vulnerabilities...");
+    String vulnerabilities = askChatGPT(String.format(GCG_VULNERABILITY_STRING, decompiled));
+    if (vulnerabilities != null) {
         report.append("Vulnerabilities:\n").append(vulnerabilities).append("\n\n");
+    } else {
+        report.append("Vulnerabilities: Failed to retrieve\n\n");
+    }
 
-        // Provide exploitation guide
-        String exploitationGuide = askChatGPT(String.format(GCG_EXPLOITATION_GUIDE_STRING, decompileFunction(function)));
+    // Provide exploitation guide
+    log("Generating exploitation guide...");
+    String exploitationGuide = askChatGPT(String.format(GCG_EXPLOITATION_GUIDE_STRING, decompiled));
+    if (exploitationGuide != null) {
         report.append("Exploitation Guide:\n").append(exploitationGuide).append("\n\n");
+    } else {
+        report.append("Exploitation Guide: Failed to retrieve\n\n");
+    }
 
-        report.append("-------------------------------------------\n\n");
+    // Provide exact C code
+    log("Generating exact C code...");
+    String exactCCode = askChatGPT(String.format(GCG_EXACT_C_CODE_STRING, decompiled));
+    if (exactCCode != null) {
+        report.append("Exact C Code:\n").append(exactCCode).append("\n\n");
+    } else {
+        report.append("Exact C Code: Failed to retrieve\n\n");
     }
 
     // Save the report to a file
-    String fileName = program.getName() + "_analysis_report.txt";
+    String fileName = program.getName() + "_" + function.getName() + "_analysis_report.txt";
     try (FileWriter writer = new FileWriter(fileName)) {
         writer.write(report.toString());
         ok("Report saved to " + fileName);
     } catch (IOException e) {
         error("Failed to save the report: " + e.getMessage());
     }
-  }
+}
 
   private String decompileFunction(Function func) {
     FlatProgramAPI programApi = new FlatProgramAPI(currentProgram);
